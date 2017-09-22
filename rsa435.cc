@@ -74,9 +74,9 @@ BigInteger exEuc(BigInteger a, BigInteger b){
 	BigInteger y = 1;
 	BigInteger prevY = 0; //holds the previous value of y
 	BigInteger temp, quot;
-	  while(b != 0){
-	    quot = a / b;
-	    temp = b;
+		while(b != 0){
+			quot = a / b;
+			temp = b;
 			b = a % b;
 			a = temp;
 			temp = x;
