@@ -1,3 +1,5 @@
+//Anthony Scaglione, University of Akron
+
 // You need to complete this program for a part of your first project.
 
 // Standard libraries
@@ -73,16 +75,16 @@ BigInteger exEuc(BigInteger a, BigInteger b){
 	BigInteger prevY = 0; //holds the previous value of y
 	BigInteger temp, quot;
 	  while(b != 0){
-			quot = a / b;
-			temp = b;
-	    b = a % b;
-	    a = temp;
-	    temp = x;
-	    x = prevX-quot*x;
-	    prevX = temp;
-	    temp = y;
-	    y = prevY-quot*y;
-	    prevY = temp;
+	    quot = a / b;
+	    temp = b;
+			b = a % b;
+			a = temp;
+			temp = x;
+			x = prevX-quot*x;
+			prevX = temp;
+			temp = y;
+			y = prevY-quot*y;
+			prevY = temp;
 	  }
 	  return prevY; //this ends up being d
 }
