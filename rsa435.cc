@@ -8,7 +8,10 @@
 #include <stdlib.h>
 #include <math.h>
 #include <fstream>
+#include <streambuf>
 
+//sha256 library
+#include "sha256.h"
 
 // `BigIntegerLibrary.hh' includes all of the library headers.
 #include "BigIntegerLibrary.hh"
@@ -17,6 +20,7 @@ BigInteger genBigPrime();
 bool fTest(BigInteger);
 BigInteger modulo(BigInteger, BigInteger, BigInteger);
 BigInteger exEuc(BigInteger ,BigInteger);
+void keyGen(BigInteger, BigInteger);
 
 int main() {
 	/* The library throws `const char *' error messages when things go
@@ -24,35 +28,17 @@ int main() {
 	 * one.  Your C++ compiler might need a command-line option to compile
 	 * code that uses exceptions. */
 	try {
+			BigInteger p = BigInteger(1);
+			BigInteger q = BigInteger(1);
+			//keyGen(p,q);
 
-      std::cout << "a couple of test cases for 3460:435/535 Algorithms!!!\n";
-      BigInteger p = BigInteger(1);
-			p = genBigPrime();
-			std::cout << "\nmy p !!!\n";
-      std::cout << p;
-      BigInteger q = BigInteger(1);
-      q = genBigPrime();
-      std::cout << "\nmy q !!!\n";
-      std::cout << q;
-      std::cout << "\nmy n = p*q !!!\n";
-      BigInteger n = p*q;
-      std::cout << n;
-      //std::cout << "my n/q !!!\n";
-      //std::cout << n/q;
-			BigInteger phi = (p-1)*(q-1);
-			std::cout << "\nmy phi = (p-1)*(q-1) !!!\n";
-			std::cout << phi;
-			BigInteger e = 65537;
-			BigInteger d = exEuc(phi, e);
+			std::ifstream ifs("file.txt");
+ 			std::string input((std::istreambuf_iterator<char>(ifs)),(std::istreambuf_iterator<char>()));
+			std::cout << input << std::endl;
 
-			std::ofstream myfile;
-			myfile.open("e_n.txt");
-			myfile << e << "\n" << n;
-			myfile.close();
-			myfile.open("d_n.txt");
-			myfile << d << "\n" << n;
-			myfile.close();
+			//std::string output = sha256(input);
 
+			//std::cout << output << std::endl;
 
 
 	} catch(char const* err) {
@@ -61,6 +47,40 @@ int main() {
 	}
 
 	return 0;
+}
+
+void keyGen(BigInteger p, BigInteger q){
+	std::cout << "a couple of test cases for 3460:435/535 Algorithms!!!\n";
+	p = genBigPrime();
+	std::cout << "\nmy p !!!\n";
+	std::cout << p;
+	q = genBigPrime();
+	std::cout << "\nmy q !!!\n";
+	std::cout << q;
+	std::cout << "\nmy n = p*q !!!\n";
+	BigInteger n = p*q;
+	std::cout << n;
+	//std::cout << "my n/q !!!\n";
+	//std::cout << n/q;
+	BigInteger phi = (p-1)*(q-1);
+	std::cout << "\nmy phi = (p-1)*(q-1) !!!\n";
+	std::cout << phi;
+	BigInteger e = 65537;
+	BigInteger d = exEuc(phi, e);
+	BigInteger test = (e*d)%phi;
+
+	//testing exEuc result
+	std::cout << "\n\n" << test;
+	std::cout << "\n\n" << d;
+
+	//write the found keys to a file
+	std::ofstream myfile;
+	myfile.open("e_n.txt");
+	myfile << e << "\n" << n;
+	myfile.close();
+	myfile.open("d_n.txt");
+	myfile << d << "\n" << n;
+	myfile.close();
 }
 
 //extended euclidean algorithm
@@ -73,17 +93,17 @@ BigInteger exEuc(BigInteger a, BigInteger b){
 	BigInteger prevX = 1; //holds the previous value of x
 	BigInteger y = 1;
 	BigInteger prevY = 0; //holds the previous value of y
-	BigInteger temp, quot;
+	BigInteger temp, q;
 		while(b != 0){
-			quot = a / b;
+			q = a / b;
 			temp = b;
 			b = a % b;
 			a = temp;
 			temp = x;
-			x = prevX-quot*x;
+			x = prevX-q*x;
 			prevX = temp;
 			temp = y;
-			y = prevY-quot*y;
+			y = prevY-q*y;
 			prevY = temp;
 	  }
 	  return prevY; //this ends up being d
@@ -94,7 +114,7 @@ BigInteger genBigPrime(){
 	BigInteger big1 = BigInteger(1);
 	do{
 		big1 = 1;
-		for (int i=0;i<200;i++) { //TODO -switch back to 400
+		for (int i=0;i<400;i++) { //TODO -switch back to 400
 			 big1 = big1*10 +rand();
 		}
 	}while(!fTest(big1));
