@@ -9,6 +9,7 @@
 #include <math.h>
 #include <fstream>
 #include <streambuf>
+#include <sstream>
 
 //sha256 library
 #include "sha256.h"
@@ -21,6 +22,8 @@ bool fTest(BigInteger);
 BigInteger modulo(BigInteger, BigInteger, BigInteger);
 BigInteger exEuc(BigInteger ,BigInteger);
 void keyGen(BigInteger, BigInteger);
+void sign(std::string);
+void verify(std::string);
 
 int main() {
 	/* The library throws `const char *' error messages when things go
@@ -31,14 +34,12 @@ int main() {
 			BigInteger p = BigInteger(1);
 			BigInteger q = BigInteger(1);
 			//keyGen(p,q);
+			sign("file.txt");
+			verify("file.txt.signed");
 
-			std::ifstream ifs("file.txt");
- 			std::string input((std::istreambuf_iterator<char>(ifs)),(std::istreambuf_iterator<char>()));
-			std::cout << input << std::endl;
+			//BigInteger outputInt = stringToBigInteger(output);
 
-			//std::string output = sha256(input);
-
-			//std::cout << output << std::endl;
+			//std::cout << sign("file.txt") << std::endl;
 
 
 	} catch(char const* err) {
@@ -48,31 +49,78 @@ int main() {
 
 	return 0;
 }
+void verify(std::string fileName){
+	//fetch decrypted signature from file
+	std::ifstream ifs(fileName.c_str());
+	std::string decrypted;
+	while (ifs >> std::ws && std::getline(ifs, decrypted));
+	ifs.close();
+	//fetch content from file
+	ifs.open(fileName.c_str());
+	std::string input((std::istreambuf_iterator<char>(ifs)),(std::istreambuf_iterator<char>()));
+	std::string::size_type i = input.find(decrypted);
+	if (i != std::string::npos)
+  	input.erase(i, decrypted.length());
+	//generate hash of content
+	std::string shaOut = sha256(input);
+	//fetch keys from keyfile
+	BigUnsigned content = BigUnsignedInABase(shaOut, 16);
+	std::cout << content << std::endl;
+	ifs.open("e_n.txt");
+	std::string eIn = "";
+	getline(ifs,eIn); //get e
+	BigInteger e = stringToBigInteger(eIn);
+	std::string nIn = "";
+	getline(ifs,nIn); //get n
+	BigInteger n = stringToBigInteger(nIn);
+
+	std::cout << modulo(stringToBigInteger(decrypted), e, n) << std::endl;
+
+	BigInteger m = stringToBigInteger(decrypted);
+
+	//test verification
+	if(modulo(m, e, n) == content){
+		std::cout << "verified" << std::endl;
+	}else{
+		std::cout << "fail" << std::endl;
+	}
+
+
+}
+
+//signs a file, given the filename
+void sign(std::string fileName){
+	//fetch data from text files
+	std::ifstream ifs(fileName.c_str());
+	std::string input((std::istreambuf_iterator<char>(ifs)),(std::istreambuf_iterator<char>()));
+	ifs.close();
+	std::string shaOut = sha256(input);
+	//fetch keys from keyfile
+	BigUnsigned c = BigUnsignedInABase(shaOut, 16);
+	std::cout << c << std::endl;
+	ifs.open("d_n.txt");
+	std::string dIn = "";
+	getline(ifs,dIn); //get d
+	BigInteger d = stringToBigInteger(dIn);
+	std::string nIn = "";
+	getline(ifs,nIn); //get n
+	BigInteger n = stringToBigInteger(nIn);
+	//return signed value
+	fileName = fileName + ".signed";
+	std::ofstream ofs(fileName.c_str(), std::ios::out | std::ios::trunc);
+	ofs << input;
+	ofs << modulo(c, d, n);
+	ofs.close();
+}
 
 void keyGen(BigInteger p, BigInteger q){
-	std::cout << "a couple of test cases for 3460:435/535 Algorithms!!!\n";
 	p = genBigPrime();
-	std::cout << "\nmy p !!!\n";
-	std::cout << p;
 	q = genBigPrime();
-	std::cout << "\nmy q !!!\n";
-	std::cout << q;
-	std::cout << "\nmy n = p*q !!!\n";
 	BigInteger n = p*q;
-	std::cout << n;
-	//std::cout << "my n/q !!!\n";
-	//std::cout << n/q;
 	BigInteger phi = (p-1)*(q-1);
-	std::cout << "\nmy phi = (p-1)*(q-1) !!!\n";
-	std::cout << phi;
 	BigInteger e = 65537;
 	BigInteger d = exEuc(phi, e);
 	BigInteger test = (e*d)%phi;
-
-	//testing exEuc result
-	std::cout << "\n\n" << test;
-	std::cout << "\n\n" << d;
-
 	//write the found keys to a file
 	std::ofstream myfile;
 	myfile.open("e_n.txt");
@@ -132,6 +180,7 @@ bool fTest(BigInteger p){
 		return true;
 }
 
+
 BigInteger modulo(BigInteger x, BigInteger y, BigInteger m){
 	if(y == 0){
 		return 1;
@@ -143,20 +192,3 @@ BigInteger modulo(BigInteger x, BigInteger y, BigInteger m){
 		return (z*z*x)%m;
 	}
 }
-
-//Credit to Khan Academy for helping with this one
-//modular exponent function
-/*
-BigInteger modulo(BigInteger base, BigInteger mod){
-		BigInteger exponent = mod - 1;
-    BigInteger x = 1;
-    BigInteger y = base;
-    while (exponent > 0){
-        if (exponent % 2 == 1)
-            x = (x * y) % mod;
-        y = (y * y) % mod;
-        exponent = exponent / 2;
-    }
-    return x % mod;
-}
-*/
